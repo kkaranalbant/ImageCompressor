@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Image Compressor</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background-color: #f0f0f0;
+            }
+
+            .container {
+                text-align: center;
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+            button {
+                margin-top: 10px;
+                padding: 10px 20px;
+                border: none;
+                background-color: #007BFF;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+            .images-container {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Image Compressor</h1>
+            <input type="file" id="fileInput" accept="image/*">
+            <button id="compressBtn">Compress</button>
+            <div class="images-container" id="imagesContainer"></div>
+        </div>
+        <script>
+            document.getElementById('compressBtn').addEventListener('click', async function () {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    alert("Please select an image file.");
+                    return;
+                }
+
+                // Eski resimleri kaldır
+                const imagesContainer = document.getElementById('imagesContainer');
+                imagesContainer.innerHTML = '';
+
+                const reader = new FileReader();
+                reader.onloadend = async function () {
+                    const arrayBuffer = reader.result;
+                    const byteArray = new Uint8Array(arrayBuffer);
+
+                    const response = await fetch('/compress', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({image: Array.from(byteArray)})
+                    });
+
+                    if (response.ok) {
+                        const compressedImage = await response.blob();
+                        const url = URL.createObjectURL(compressedImage);
+                        const img = document.createElement('img');
+                        img.src = url;
+                        imagesContainer.appendChild(img);
+                    } else {
+                        alert("Image compression failed.");
+                    }
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        </script>
+    </body>
+</html>
